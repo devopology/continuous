@@ -40,6 +40,10 @@ import java.util.Map;
 
 public class Task extends Toolset {
 
+    private final static String BUILD_IN_PROGRESS = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"102\" height=\"20\"><linearGradient id=\"b\" x2=\"0\" y2=\"100%\"><stop offset=\"0\" stop-color=\"#bbb\" stop-opacity=\".1\"/><stop offset=\"1\" stop-opacity=\".1\"/></linearGradient><mask id=\"a\"><rect width=\"102\" height=\"20\" rx=\"3\" fill=\"#fff\"/></mask><g mask=\"url(#a)\"><path fill=\"#555\" d=\"M0 0h37v20H0z\"/><path fill=\"#9f9f9f\" d=\"M37 0h65v20H37z\"/><path fill=\"url(#b)\" d=\"M0 0h102v20H0z\"/></g><g fill=\"#fff\" text-anchor=\"middle\" font-family=\"DejaVu Sans,Verdana,Geneva,sans-serif\" font-size=\"11\"><text x=\"18.5\" y=\"15\" fill=\"#010101\" fill-opacity=\".3\">build</text><text x=\"18.5\" y=\"14\">build</text><text x=\"68.5\" y=\"15\" fill=\"#010101\" fill-opacity=\".3\">in progress</text><text x=\"68.5\" y=\"14\">in progress</text></g></svg>";
+    private final static String BUILD_PASSING = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"88\" height=\"20\"><g shape-rendering=\"crispEdges\"><path fill=\"#555\" d=\"M0 0h37v20H0z\"/><path fill=\"#97CA00\" d=\"M37 0h51v20H37z\"/></g><g fill=\"#fff\" text-anchor=\"middle\" font-family=\"DejaVu Sans,Verdana,Geneva,sans-serif\" font-size=\"11\"><text x=\"18.5\" y=\"14\">build</text><text x=\"61.5\" y=\"14\">passing</text></g></svg>";
+    private final static String BUILD_FAILING = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"20\"><g shape-rendering=\"crispEdges\"><path fill=\"#555\" d=\"M0 0h37v20H0z\"/><path fill=\"#e05d44\" d=\"M37 0h43v20H37z\"/></g><g fill=\"#fff\" text-anchor=\"middle\" font-family=\"DejaVu Sans,Verdana,Geneva,sans-serif\" font-size=\"11\"><text x=\"18.5\" y=\"14\">build</text><text x=\"57.5\" y=\"14\">failing</text></g></svg>";
+
     private final static JSONParser jsonParser = new JSONParser();
 
     public static void main(String [] args) throws Exception {
@@ -86,6 +90,7 @@ public class Task extends Toolset {
 
     private Map taskDefinitionMap = null;
 
+    /*
     private String name = null;
     private String gitBranch = null;
     private String gitCommand = "clone";
@@ -94,9 +99,23 @@ public class Task extends Toolset {
     private String javaHome = null;
     private String workspace = null;
     private String workspaceClean = "true";
+    private String statusFile = null;
+    */
+
+    public void setProperty(String key, String value) {
+        taskDefinitionMap.put(key, value);
+    }
 
     public String getProperty(String key) {
         return (String) taskDefinitionMap.get(key);
+    }
+
+    public String getProperty(String key, String defaultValue) {
+        String result = getProperty(key);
+        if (null == result) {
+            result = defaultValue;
+        }
+        return result;
     }
 
     public void execute(String [] args) throws Exception {
@@ -144,17 +163,31 @@ public class Task extends Toolset {
             if (0 == exitCode) {
                 exitCode = gitStep();
             }
+            else {
+                publishStatus(BUILD_FAILING);
+            }
 
             if (0 == exitCode) {
                 exitCode = mvnStep();
             }
-
-            if (0 == exitCode) {
-                exitCode = publishStep();
+            else {
+                publishStatus(BUILD_FAILING);
             }
 
             if (0 == exitCode) {
+                exitCode = publishAPIDocsStep();
+            }
+
+            if (0 == exitCode) {
+                exitCode = publishAPIDocsStep();
+            }
+
+            if (0 == exitCode) {
+                publishStatus(BUILD_PASSING);
                 status = "SUCCESS";
+            }
+            else {
+                publishStatus(BUILD_FAILING);
             }
         }
         catch (Throwable t) {
@@ -168,14 +201,21 @@ public class Task extends Toolset {
     public int prepare() throws Exception {
         //info("prepare ...");
 
-        name = getProperty("name");
+        String name = getProperty("name");
         name = escape(name);
 
-        gitBranch = getProperty("git.branch");
-        gitHome = getProperty("git.home");
-        gitURL = getProperty("git.url");
-        javaHome = getProperty("java.home");
-        workspace = getProperty("workspace");
+        setProperty("name.escaped", name);
+
+        publishStatus(BUILD_IN_PROGRESS);
+
+        String gitBranch = getProperty("git.branch");
+        String gitHome = getProperty("git.home");
+        String gitURL = getProperty("git.url");
+        String javaHome = getProperty("java.home");
+        String workspace = getProperty("workspace");
+
+        String workspaceClean = "true";
+        setProperty("workspace.clean", workspaceClean);
 
         changeDirectory(workspace);
 
@@ -188,13 +228,10 @@ public class Task extends Toolset {
                 getFileUtils().deleteDirectory(path);
                 getFileUtils().forceMkdir(path);
             }
-            else {
-                gitCommand = "pull";
-            }
         }
 
         changeDirectory(path);
-        info("expanded workspace = [ " + pwd() + " ]");
+        //info("expanded workspace = [ " + pwd() + " ]");
 
         return 0;
     }
@@ -202,10 +239,20 @@ public class Task extends Toolset {
     public int gitStep() throws Exception {
         //info("gitStep()");
 
-        String gitExecutable = gitHome + File.separator + "git";
+        String gitHome = getProperty("git.home");
+        String gitExecutable = getFileUtils().getPath(gitHome, "git");
+        String gitBranch = getProperty("git.branch");
+        String gitURL = getProperty("git.url");
+        String workspaceClean = getProperty("workspace.clean", "true");
 
         if (OSUtils.isWindows()) {
             gitExecutable = gitExecutable + ".exe";
+        }
+
+        String gitCommand = "clone";
+
+        if ("false".equals(workspaceClean)) {
+            gitCommand = "pull";
         }
 
         ExecResult execResult = null;
@@ -215,7 +262,7 @@ public class Task extends Toolset {
             execResult = getExecUtils().execute(gitExecutable, arguments("clone", "-b" + gitBranch, gitURL, "."));
         }
         else {
-            info("pwd() = [" + pwd() + "]");
+            //info("pwd() = [" + pwd() + "]");
             execResult = getExecUtils().execute(gitExecutable, arguments("pull"));
         }
 
@@ -260,13 +307,37 @@ public class Task extends Toolset {
         return exitCode;
     }
 
-    public int publishStep() {
-        info("publishStep()");
+    public int publishAPIDocsStep() throws Exception {
+        String workspace = getProperty("workspace");
+        String nameEscaped = getProperty("name.escaped");
+        String apiDocsSource = absolutePath(getFileUtils().getPath(workspace, nameEscaped, "target", "apidocs"));
+
+        if (getFileUtils().exists(apiDocsSource)) {
+
+            String apiDocsDeployDestination = getProperty("apidocs.deploy.destination");
+
+            if (null != apiDocsDeployDestination) {
+                if (!getFileUtils().exists(apiDocsDeployDestination)) {
+                    getFileUtils().forceMkdir(apiDocsDeployDestination);
+                }
+
+                getFileUtils().copyDirectory(apiDocsSource, apiDocsDeployDestination);
+            }
+        }
+
         return 0;
+    }
+
+    public void publishStatus(String status) throws IOException {
+        String workspace = getProperty("workspace");
+        String name = getProperty("name.escaped");
+        String statusFilename = absolutePath(workspace + File.separator + name + ".status.svg");
+
+        //info("statusFilename = [" + statusFilename + "]");
+        getFileUtils().writeStringToFile(statusFilename, status, StandardCharsets.UTF_8);
     }
 
     private static String escape(String string) {
         return string.replaceAll("[^a-zA-Z0-9\\.-]", "_");
     }
-
 }
