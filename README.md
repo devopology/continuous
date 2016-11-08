@@ -1,2 +1,2 @@
-# continuous
-Continuous
+# Continuous
+Continuous build server
