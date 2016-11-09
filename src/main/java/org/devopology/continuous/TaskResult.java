@@ -16,10 +16,10 @@
 
 package org.devopology.continuous;
 
-import org.devopology.tools.Toolset;
+public interface TaskResult {
 
-public interface Task {
-
-    public String getNamespace();
-    public TaskResult execute(Toolset toolset) throws Exception;
+    public Task getTask();
+    public int getExitCode();
+    public String getOutput();
+    public Throwable getThrowable();
 }

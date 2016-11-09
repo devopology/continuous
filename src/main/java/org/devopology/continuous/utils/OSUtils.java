@@ -1,4 +1,4 @@
-package org.devopology.continuous;
+package org.devopology.continuous.utils;
 
 /**
  * Created by Doug on 11/6/2016.
