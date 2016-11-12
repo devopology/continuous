@@ -33,17 +33,16 @@ public class Prepare implements Task {
         toolset.info(getNamespace() + "::execute()");
 
         String name = toolset.getProperty("name");
-        name = escape(name);
-        toolset.setProperty("name.escaped", name);
-
-        String workspace = tempProperties.getProperty("workspace");
-        toolset.setProperty("workspace.home", "workspace" + File.separator + nameEscaped);
+        String nameEscaped = escape(name);
+        toolset.setProperty("name.escaped", nameEscaped);
 
         String gitBranch = toolset.getProperty("git.branch");
         String gitHome = toolset.getProperty("git.home");
         String gitURL = toolset.getProperty("git.url");
         String javaHome = toolset.getProperty("java.home");
         String workspace = toolset.getProperty("workspace");
+
+        toolset.setProperty("workspace.home", workspace + File.separator + nameEscaped);
 
         String workspaceClean = "true";
         toolset.setProperty("workspace.clean", workspaceClean);

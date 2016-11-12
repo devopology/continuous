@@ -106,7 +106,7 @@ public class Main extends Toolset {
 
             String workspaceHome = properties.get("workspace.home");
             String apidocsDeployDestination = properties.get("apidocs.deploy.destination");
-            getZipUtils().unzip(workspaceHome + File.separator + "target" + File.separator zipFilename, String destinationPath))
+            //getZipUtils().unzip(workspaceHome + File.separator + "target" + File.separator zipFilename, String destinationPath))
 
             setProperty("status", Status.BUILD_PASSING);
             publishStatus();
