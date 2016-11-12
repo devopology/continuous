@@ -23,6 +23,7 @@ import org.devopology.continuous.task.Status;
 import org.devopology.continuous.task.TaskChain;
 import org.devopology.continuous.utils.OrderedProperties;
 import org.devopology.tools.Toolset;
+import org.devopology.tools.exception.FailureException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,6 +44,7 @@ public class Main extends Toolset {
         String workspace = tempProperties.getProperty("workspace");
         String name = tempProperties.getProperty("name");
         String nameEscaped = escape(name);
+        tempProperties.put("name.escaped", nameEscaped);
 
         PrintStream printStream = new PrintStream(new FileOutputStream(workspace + File.separator + nameEscaped + ".log"));
         System.setOut(printStream);
@@ -94,15 +96,20 @@ public class Main extends Toolset {
             publishStatus();
 
             TaskChain taskChain = new TaskChain();
-            taskChain.addTask(new Status());
             taskChain.addTask(new Git());
             taskChain.addTask(new Mvn());
-            taskChain.addTask(new Status());
 
             TaskResult taskResult = taskChain.execute(this);
+            if ((null != taskResult) && (0 != taskResult.getExitCode())) {
+                throw new FailureException(taskResult.getOutput());
+            }
+
+            String workspaceHome = properties.get("workspace.home");
+            String apidocsDeployDestination = properties.get("apidocs.deploy.destination");
+            getZipUtils().unzip(workspaceHome + File.separator + "target" + File.separator zipFilename, String destinationPath))
 
             setProperty("status", Status.BUILD_PASSING);
-
+            publishStatus();
         }
         catch (Throwable t) {
             setProperty("status", Status.BUILD_FAILING);

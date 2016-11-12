@@ -21,6 +21,8 @@ import org.devopology.continuous.TaskResult;
 import org.devopology.continuous.TaskResultImpl;
 import org.devopology.tools.Toolset;
 
+import java.io.File;
+
 public class Prepare implements Task {
 
     public String getNamespace() {
@@ -33,6 +35,9 @@ public class Prepare implements Task {
         String name = toolset.getProperty("name");
         name = escape(name);
         toolset.setProperty("name.escaped", name);
+
+        String workspace = tempProperties.getProperty("workspace");
+        toolset.setProperty("workspace.home", "workspace" + File.separator + nameEscaped);
 
         String gitBranch = toolset.getProperty("git.branch");
         String gitHome = toolset.getProperty("git.home");

@@ -16,17 +16,13 @@
 
 package org.devopology.continuous.task;
 
-import org.apache.maven.shared.invoker.DefaultInvocationRequest;
-import org.apache.maven.shared.invoker.DefaultInvoker;
-import org.apache.maven.shared.invoker.InvocationRequest;
-import org.apache.maven.shared.invoker.InvocationResult;
-import org.apache.maven.shared.invoker.Invoker;
 import org.devopology.continuous.Task;
 import org.devopology.continuous.TaskResult;
 import org.devopology.continuous.TaskResultImpl;
+import org.devopology.tools.ExecResult;
 import org.devopology.tools.Toolset;
 
-import java.io.File;
+import java.util.Map;
 
 public class Mvn implements Task {
 
@@ -37,42 +33,24 @@ public class Mvn implements Task {
     public TaskResult execute(Toolset toolset) throws Exception {
         toolset.info(getNamespace() + "::execute()");
 
+        String javaHome = toolset.getProperty("java.home");
+        String mvnHome = toolset.getProperty("mvn.home");
+        String mvnExecutable = toolset.getFileUtils().getPath(mvnHome, "bin", "mvn");
         String mvnPom = toolset.absolutePath(toolset.getProperty("mvn.pom"));
         String mvnGoals = toolset.getProperty("mvn.goals");
+
+        Map<String, String> environmentVariableMap = toolset.getExecUtils().getEnvironmentVariableMap();
+        environmentVariableMap.put("JAVA_HOME", javaHome);
+
         toolset.info("mvn -f " + mvnPom + " " + mvnGoals);
 
         int exitCode = -1;
-        String javaHome = toolset.getProperty("java.home");
-        String mvnHome = toolset.getProperty("mvn.home");
 
-        InvocationRequest request = new DefaultInvocationRequest();
-        request.setJavaHome(new File(javaHome));
-        request.setBaseDirectory(new File(toolset.getCurrentDirectory().getPath()));
-        request.setPomFile(new File(mvnPom));
-        request.setGoals(toolset.stringToList(mvnGoals));
+        ExecResult execResult = toolset.getExecUtils().execute(mvnExecutable, mvnGoals.split(" "), environmentVariableMap);
 
-        Invoker invoker = new DefaultInvoker();
-        invoker.setMavenHome(new File(mvnHome));
-        InvocationResult invocationResult = invoker.execute(request);
+        toolset.info(execResult.getOutput());
 
-        if (null != invocationResult.getExecutionException()) {
-            toolset.error("mvn exception -> " + invocationResult.getExecutionException());
-            toolset.setProperty("status", Status.BUILD_FAILING);
+        return new TaskResultImpl(this, execResult.getExitCode(), execResult.getOutput(), null);
 
-            return new TaskResultImpl(this, -1, "Exception", invocationResult.getExecutionException());
-        }
-        else {
-            exitCode = invocationResult.getExitCode();
-
-            if (0 != exitCode) {
-                toolset.error("mvn exitCode = [" + exitCode + "]");
-                toolset.setProperty("status", Status.BUILD_FAILING);
-
-                return new TaskResultImpl(this, -1, "Exception", invocationResult.getExecutionException());
-            }
-        }
-
-        toolset.setProperty("status", Status.BUILD_PASSING);
-        return new TaskResultImpl(this, 0, null, null);
     }
 }

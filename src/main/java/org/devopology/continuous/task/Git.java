@@ -60,7 +60,6 @@ public class Git implements Task {
         }
 
         toolset.info(execResult.getOutput());
-        //info("git exitCode = [" + execResult.getExitCode() + "] output > " + execResult.getOutput());
 
         return new TaskResultImpl(this, execResult.getExitCode(), execResult.getOutput(), null);
     }
