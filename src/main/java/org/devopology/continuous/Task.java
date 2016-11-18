@@ -20,6 +20,5 @@ import org.devopology.tools.Toolset;
 
 public interface Task {
 
-    public String getNamespace();
     public TaskResult execute(Toolset toolset) throws Exception;
 }

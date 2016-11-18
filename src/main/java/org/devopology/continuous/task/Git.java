@@ -16,21 +16,17 @@
 
 package org.devopology.continuous.task;
 
-import org.devopology.continuous.utils.OSUtils;
 import org.devopology.continuous.Task;
 import org.devopology.continuous.TaskResult;
 import org.devopology.continuous.TaskResultImpl;
+import org.devopology.continuous.utils.OSUtils;
 import org.devopology.tools.ExecResult;
 import org.devopology.tools.Toolset;
 
 public class Git implements Task {
 
-    public String getNamespace() {
-        return getClass().getName();
-    }
-
     public TaskResult execute(Toolset toolset) throws Exception {
-        toolset.info(getNamespace() + "::execute()");
+        toolset.info(getClass().getName() + "::execute()");
 
         String gitHome = toolset.getProperty("git.home");
         String gitExecutable = toolset.getFileUtils().getPath(gitHome, "git");

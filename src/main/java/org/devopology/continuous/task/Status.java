@@ -36,12 +36,8 @@ public class Status implements Task {
     private final static String BUILD_PASSING_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"88\" height=\"20\"><g shape-rendering=\"crispEdges\"><path fill=\"#555\" d=\"M0 0h37v20H0z\"/><path fill=\"#97CA00\" d=\"M37 0h51v20H37z\"/></g><g fill=\"#fff\" text-anchor=\"middle\" font-family=\"DejaVu Sans,Verdana,Geneva,sans-serif\" font-size=\"11\"><text x=\"18.5\" y=\"14\">build</text><text x=\"61.5\" y=\"14\">passing</text></g></svg>";
     private final static String BUILD_FAILING_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"20\"><g shape-rendering=\"crispEdges\"><path fill=\"#555\" d=\"M0 0h37v20H0z\"/><path fill=\"#e05d44\" d=\"M37 0h43v20H37z\"/></g><g fill=\"#fff\" text-anchor=\"middle\" font-family=\"DejaVu Sans,Verdana,Geneva,sans-serif\" font-size=\"11\"><text x=\"18.5\" y=\"14\">build</text><text x=\"57.5\" y=\"14\">failing</text></g></svg>";
 
-    public String getNamespace() {
-        return getClass().getName();
-    }
-
     public TaskResult execute(Toolset toolset) throws Exception {
-        //toolset.info(getNamespace() + "::execute()");
+        toolset.info(getClass().getName() + "::execute()");
 
         String workspace = toolset.getProperty("workspace");
         String name = toolset.getProperty("name");

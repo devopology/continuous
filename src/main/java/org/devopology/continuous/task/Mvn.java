@@ -26,12 +26,8 @@ import java.util.Map;
 
 public class Mvn implements Task {
 
-    public String getNamespace() {
-        return getClass().getName();
-    }
-
     public TaskResult execute(Toolset toolset) throws Exception {
-        toolset.info(getNamespace() + "::execute()");
+        toolset.info(getClass().getName() + "::execute()");
 
         String javaHome = toolset.getProperty("java.home");
         String mvnHome = toolset.getProperty("mvn.home");
@@ -46,7 +42,7 @@ public class Mvn implements Task {
 
         int exitCode = -1;
 
-        ExecResult execResult = toolset.getExecUtils().execute(mvnExecutable, mvnGoals.split(" "), environmentVariableMap);
+        ExecResult execResult = toolset.getExecUtils().execute(mvnExecutable, mvnGoals.split(" "));
 
         toolset.info(execResult.getOutput());
 

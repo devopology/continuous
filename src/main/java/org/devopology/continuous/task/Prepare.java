@@ -25,12 +25,8 @@ import java.io.File;
 
 public class Prepare implements Task {
 
-    public String getNamespace() {
-        return getClass().getName();
-    }
-
     public TaskResult execute(Toolset toolset) throws Exception {
-        toolset.info(getNamespace() + "::execute()");
+        toolset.info(getClass().getName() + "::execute()");
 
         String name = toolset.getProperty("name");
         String nameEscaped = escape(name);
