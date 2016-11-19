@@ -22,6 +22,7 @@ import org.devopology.continuous.task.Prepare;
 import org.devopology.continuous.task.Status;
 import org.devopology.continuous.task.TaskChain;
 import org.devopology.continuous.utils.OrderedProperties;
+import org.devopology.tools.SystemUtils;
 import org.devopology.tools.Toolset;
 import org.devopology.tools.exception.FailureException;
 
@@ -30,7 +31,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class Main extends Toolset {
 
@@ -106,8 +106,12 @@ public class Main extends Toolset {
 
             String workspaceHome = properties.get("workspace.home");
             String apidocsDeployDestination = properties.get("apidocs.deploy.destination");
-            //getZipUtils().unzip(workspaceHome + File.separator + "target" + File.separator zipFilename, String destinationPath))
 
+            if (null != apidocsDeployDestination) {
+                String rsync = getSystemUtils().resolve("rsync", SystemUtils.DEFAULT_UNIX_SEARCH_PATHS);
+                getExecUtils().execute(rsync, arguments("-a", workspaceHome + File.separator + "target/apidocs/", absolutePath(apidocsDeployDestination)), 0);
+            }
+            
             setProperty("status", Status.BUILD_PASSING);
             publishStatus();
         }
